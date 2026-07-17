@@ -1,0 +1,128 @@
+============================================================
+  da 接单库 · 使用与迁移步骤文档
+  生成时间：2026-07-17
+  仓库地址：https://github.com/qryxp/-jupyter
+============================================================
+
+本文件记录两类操作：
+  A. 在本机（E:\接单库）继续开发并推送到 GitHub
+  B. 换一台新电脑，从 GitHub 一键安装
+以及 C. SSH key 与 D. HTTPS token 的相关说明。
+
+
+============================================================
+A. 本机继续开发（目录：E:\接单库）
+============================================================
+
+前提：本机已配好 SSH key（见 C 节），且已 `pip install -e .` 可编辑安装。
+
+日常改动代码后，按顺序执行（在 Git Bash 或终端里，先 cd 到库目录）：
+
+  cd /e/接单库
+  git add -A
+  git commit -m "这里写本次改动说明"
+  git push origin main
+
+推完即同步到 GitHub，换电脑就能拉到最新。
+
+本地调试运行（改完立刻在 notebook 里试）：
+  # 在 E:\接单库 目录下打开 Jupyter
+  jupyter notebook
+  # 单元格里：import da; da.技能外包.净到手率(df)
+
+
+============================================================
+B. 换电脑安装（两种方式任选其一）
+============================================================
+
+新电脑先装好：Python 3.10+ 与 Git。
+
+--- 方式一：SSH 免密安装（推荐，最省事）---
+  在终端执行一行即可：
+    pip install git+ssh://git@github.com/qryxp/-jupyter.git
+
+  若提示没权限（publickey 被拒），说明这台新电脑还没加 SSH key，
+  按 C 节「新电脑生成并添加 key」处理后再装。
+
+--- 方式二：HTTPS 安装（无需 key，但 URL 要带 token）---
+    pip install git+https://<你的TOKEN>@github.com/qryxp/-jupyter.git
+
+  <你的TOKEN> 换成 D 节生成的 Personal Access Token，详见 D 节。
+  不带 token 的纯 https 地址只能 clone 不能 pip 安装私有依赖，
+  本仓库是 PUBLIC，所以下面这条也能直接装（无需 token）：
+    pip install git+https://github.com/qryxp/-jupyter.git
+
+--- 想要在新电脑也能改代码（可编辑安装）---
+    git clone https://github.com/qryxp/-jupyter.git
+    cd -jupyter
+    pip install -e .
+
+
+============================================================
+C. SSH key 说明（本机已生成，换电脑需各自生成）
+============================================================
+
+【本机已有的 key】
+  私钥（不要外传！）：C:\Users\admin\.ssh\id_ed25519
+  公钥（已加到 GitHub，可公开）：
+    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEVAri5sMF4aJpQcdpDS7edwa2/iJtLZ5AEtoguUml2x da@local
+
+【新电脑生成并添加 key（换电脑时做）】
+  1) 在新电脑生成（空密码，方便非交互推送）：
+       ssh-keygen -t ed25519 -C "da@local" -f ~/.ssh/id_ed25519 -N ""
+  2) 查看并复制公钥内容：
+       cat ~/.ssh/id_ed25519.pub
+  3) 到 GitHub 网页 → 右上头像 → Settings → SSH and GPG keys
+     → New SSH key → Title 填（如 da-newpc）→ 粘贴公钥 → Add SSH key
+  4) 验证连通：
+       ssh -T git@github.com
+     看到 "You've successfully authenticated" 即可用方式一安装/推送。
+
+提示：每台电脑用自己的 key，不要把本机私钥文件拷来拷去。
+
+
+============================================================
+D. HTTPS Personal Access Token 说明（备选认证）
+============================================================
+
+当你不想配 SSH、或在新电脑临时安装时用 token。
+
+生成步骤（GitHub 网页）：
+  1) 右上头像 → Settings → Developer settings
+     → Personal access tokens → Tokens (classic)
+  2) Generate new token (classic)
+  3) Note 填（如 da-install），Expiration 按需选
+  4) 勾选 scope：至少勾 `repo`（全仓库读写）
+  5) Generate token → 复制那一长串（只显示一次，存好）
+
+使用方式：把 token 拼进安装命令
+  pip install git+https://<TOKEN>@github.com/qryxp/-jupyter.git
+本仓库是 PUBLIC，其实连 token 都不需要（见 B 节方式二末尾纯 https）。
+
+
+============================================================
+E. 更新到最新版（无论在哪台电脑）
+============================================================
+
+已用方式一/方式二装的：
+  pip install --upgrade git+ssh://git@github.com/qryxp/-jupyter.git
+  或（HTTPS 版）：
+  pip install --upgrade git+https://github.com/qryxp/-jupyter.git
+
+用方式二 clone 可编辑装的：
+  cd -jupyter
+  git pull
+
+
+============================================================
+F. 注意事项
+============================================================
+
+- 仓库是 PUBLIC，只含库代码 + 脱敏 sample_*.csv 示例数据，
+  客户真实数据不会进仓库。
+- 提交前确认没把真实数据放进 data/（data/ 已入库但应是脱敏示例）；
+  若误放敏感文件，先从 git 移除并加入 .gitignore。
+- 本机 git 提交作者已设为 qryxp（GitHub no-reply 邮箱），
+  push 后 commits 归到 qryxp 账号下。
+- .gitignore 已排除：__pycache__、*.egg-info、.workbuddy/、
+  build/、dist/*.whl，这些不会上传。
