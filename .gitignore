@@ -1,0 +1,11 @@
+# 构建与缓存产物
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+*.whl
+
+# 项目个人记忆（含本地笔记，不入库）
+.workbuddy/
