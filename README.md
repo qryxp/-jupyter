@@ -519,23 +519,38 @@ notebooks/04_业务看板.ipynb
 requirements.txt        # 纯依赖清单（pip install -r requirements.txt）
 ```
 
-## 十四、GitHub 安装（换电脑 / 实时更新）
+## 十四、安装（Gitee 主推 / GitHub 备选）
 
-把本库发布到 GitHub 后，换电脑一行就能装好，且始终是最新版。
+库已同时发布到 **Gitee** 和 **GitHub**。国内访问 Gitee 更快，推荐优先用 Gitee；GitHub 作为境外 / 备用源。两者内容始终一致。
 
-### 方式一·A：SSH 免密安装（已配 SSH key，推荐）
+### 方式一：Gitee 安装（国内推荐）
+#### A. SSH 免密（本机 key 已加到 Gitee，推荐）
+```bash
+pip install git+ssh://git@gitee.com/qryxp/order-processing-hub.git
+```
+#### B. HTTPS 一行安装（公开仓库可直接装）
+```bash
+pip install git+https://gitee.com/qryxp/order-processing-hub.git
+```
+
+### 方式二：GitHub 安装（备选）
+#### A. SSH 免密
 ```bash
 pip install git+ssh://git@github.com/qryxp/-jupyter.git
 ```
-
-### 方式一·B：HTTPS 一行安装
+#### B. HTTPS 一行安装
 ```bash
 pip install git+https://github.com/qryxp/-jupyter.git
 ```
-> 私有仓库需在地址里带令牌：`pip install git+https://<token>@github.com/qryxp/-jupyter.git`
 
-### 方式二：可编辑安装（clone 后改代码也同步）
+### 可编辑安装（clone 后改代码也同步）
 ```bash
+# Gitee
+git clone https://gitee.com/qryxp/order-processing-hub.git
+cd order-processing-hub
+pip install -e .
+
+# 或 GitHub
 git clone https://github.com/qryxp/-jupyter.git
 cd -jupyter
 pip install -e .
@@ -543,13 +558,12 @@ pip install -e .
 
 ### 更新到最新版
 ```bash
-# 用方式一·A（SSH）装的：
+# Gitee 装的（推荐）：
+pip install --upgrade git+ssh://git@gitee.com/qryxp/order-processing-hub.git
+# GitHub 装的（备选）：
 pip install --upgrade git+ssh://git@github.com/qryxp/-jupyter.git
-# 用方式一·B（HTTPS）装的：
-pip install --upgrade git+https://github.com/qryxp/-jupyter.git
-# 用方式二 clone 的：
-cd -jupyter
-git pull
+# 用 clone 可编辑装的：
+cd <仓库目录> && git pull
 ```
 
 ### 装好后 30 秒验证
@@ -562,4 +576,4 @@ print(da.技能外包.净到手率(df))      # 应返回一个数值
 
 ---
 
-> 本地开发用 `pip install -e .`（见第一节），发布 / 换电脑用上面的 GitHub 方式，二者互不冲突。
+> 本地开发用 `pip install -e .`（见第一节），发布 / 换电脑用上面的方式，二者互不冲突。Gitee 与 GitHub 内容一致，选访问快的那个即可。

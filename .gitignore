@@ -9,3 +9,8 @@ dist/
 
 # 项目个人记忆（含本地笔记，不入库）
 .workbuddy/
+
+# Office 临时锁文件（打开 docx/xlsx/pptx 时生成，勿入库）
+~$*.docx
+~$*.xlsx
+~$*.pptx

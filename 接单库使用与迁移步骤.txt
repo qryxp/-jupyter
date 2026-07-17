@@ -1,14 +1,16 @@
 ============================================================
   da 接单库 · 使用与迁移步骤文档
   生成时间：2026-07-17
-  仓库地址：https://github.com/qryxp/-jupyter
+  主仓库(Gitee)：https://gitee.com/qryxp/order-processing-hub
+  备用仓库(GitHub)：https://github.com/qryxp/-jupyter
 ============================================================
 
 本文件记录两类操作：
-  A. 在本机（E:\接单库）继续开发并推送到 GitHub
-  B. 换一台新电脑，从 GitHub 一键安装
+  A. 在本机（E:\接单库）继续开发并推送到 Gitee（GitHub 同步可选）
+  B. 换一台新电脑，从 Gitee（国内快）或 GitHub 一键安装
 以及 C. SSH key 与 D. HTTPS token 的相关说明。
 
+说明：库已同时发布 Gitee 与 GitHub，内容一致；国内访问 Gitee 更快，推荐优先用 Gitee。
 
 ============================================================
 A. 本机继续开发（目录：E:\接单库）
@@ -21,42 +23,43 @@ A. 本机继续开发（目录：E:\接单库）
   cd /e/接单库
   git add -A
   git commit -m "这里写本次改动说明"
-  git push origin main
+  git push            # 默认推到 origin（Gitee）；要同步 GitHub 再：git push github main
 
-推完即同步到 GitHub，换电脑就能拉到最新。
+推完即同步到 Gitee（也可同步 GitHub），换电脑就能拉到最新。
 
 本地调试运行（改完立刻在 notebook 里试）：
   # 在 E:\接单库 目录下打开 Jupyter
   jupyter notebook
   # 单元格里：import da; da.技能外包.净到手率(df)
 
-
 ============================================================
-B. 换电脑安装（两种方式任选其一）
+B. 换电脑安装（Gitee 优先 / GitHub 备选）
 ============================================================
 
-新电脑先装好：Python 3.10+ 与 Git。
+新电脑先装好：Python 3.10+ 与 Git。国内访问 Gitee 更快，推荐用 Gitee；
+GitHub 作为境外 / 备用源。
 
---- 方式一：SSH 免密安装（推荐，最省事）---
-  在终端执行一行即可：
+--- 方式一：Gitee 安装（国内推荐）---
+  SSH 免密（本机 key 已加到 Gitee，最省事）：
+    pip install git+ssh://git@gitee.com/qryxp/order-processing-hub.git
+  HTTPS 一行（公开仓库可直接装）：
+    pip install git+https://gitee.com/qryxp/order-processing-hub.git
+  若 SSH 提示没权限（publickey 被拒），说明这台新电脑还没加 SSH key，
+  把本机公钥加到 Gitee（设置 → SSH 公钥），或改用上面的 HTTPS 方式。
+
+--- 方式二：GitHub 安装（备选）---
     pip install git+ssh://git@github.com/qryxp/-jupyter.git
-
-  若提示没权限（publickey 被拒），说明这台新电脑还没加 SSH key，
-  按 C 节「新电脑生成并添加 key」处理后再装。
-
---- 方式二：HTTPS 安装（无需 key，但 URL 要带 token）---
-    pip install git+https://<你的TOKEN>@github.com/qryxp/-jupyter.git
-
-  <你的TOKEN> 换成 D 节生成的 Personal Access Token，详见 D 节。
-  不带 token 的纯 https 地址只能 clone 不能 pip 安装私有依赖，
-  本仓库是 PUBLIC，所以下面这条也能直接装（无需 token）：
-    pip install git+https://github.com/qryxp/-jupyter.git
+    # 或 HTTPS：pip install git+https://github.com/qryxp/-jupyter.git
 
 --- 想要在新电脑也能改代码（可编辑安装）---
+  Gitee：
+    git clone https://gitee.com/qryxp/order-processing-hub.git
+    cd order-processing-hub
+    pip install -e .
+  GitHub：
     git clone https://github.com/qryxp/-jupyter.git
     cd -jupyter
     pip install -e .
-
 
 ============================================================
 C. SSH key 说明（本机已生成，换电脑需各自生成）
@@ -64,7 +67,7 @@ C. SSH key 说明（本机已生成，换电脑需各自生成）
 
 【本机已有的 key】
   私钥（不要外传！）：C:\Users\admin\.ssh\id_ed25519
-  公钥（已加到 GitHub，可公开）：
+  公钥（已同时加到 GitHub 和 Gitee，可公开）：
     ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEVAri5sMF4aJpQcdpDS7edwa2/iJtLZ5AEtoguUml2x da@local
 
 【新电脑生成并添加 key（换电脑时做）】
@@ -72,14 +75,16 @@ C. SSH key 说明（本机已生成，换电脑需各自生成）
        ssh-keygen -t ed25519 -C "da@local" -f ~/.ssh/id_ed25519 -N ""
   2) 查看并复制公钥内容：
        cat ~/.ssh/id_ed25519.pub
-  3) 到 GitHub 网页 → 右上头像 → Settings → SSH and GPG keys
-     → New SSH key → Title 填（如 da-newpc）→ 粘贴公钥 → Add SSH key
+  3) 把公钥加到代码托管平台（Gitee / GitHub 都加一遍更稳）：
+     · Gitee：网页右上头像 → 设置 → SSH 公钥 → 添加公钥 → 粘贴 → 确定
+     · GitHub：网页右上头像 → Settings → SSH and GPG keys
+       → New SSH key → Title 填（如 da-newpc）→ 粘贴 → Add SSH key
   4) 验证连通：
-       ssh -T git@github.com
-     看到 "You've successfully authenticated" 即可用方式一安装/推送。
+       ssh -T git@gitee.com      # Gitee
+       ssh -T git@github.com     # GitHub
+     看到成功认证即可用方式一安装/推送。
 
 提示：每台电脑用自己的 key，不要把本机私钥文件拷来拷去。
-
 
 ============================================================
 D. HTTPS Personal Access Token 说明（备选认证）
@@ -87,32 +92,31 @@ D. HTTPS Personal Access Token 说明（备选认证）
 
 当你不想配 SSH、或在新电脑临时安装时用 token。
 
-生成步骤（GitHub 网页）：
-  1) 右上头像 → Settings → Developer settings
-     → Personal access tokens → Tokens (classic)
-  2) Generate new token (classic)
-  3) Note 填（如 da-install），Expiration 按需选
-  4) 勾选 scope：至少勾 `repo`（全仓库读写）
-  5) Generate token → 复制那一长串（只显示一次，存好）
+生成步骤：
+  · Gitee：网页右上头像 → 设置 → 私人令牌 → 生成新令牌 → 勾选 projects → 复制（只显示一次）
+  · GitHub：网页右上头像 → Settings → Developer settings
+     → Personal access tokens → Tokens (classic) → Generate → 勾选 repo → 复制
 
 使用方式：把 token 拼进安装命令
-  pip install git+https://<TOKEN>@github.com/qryxp/-jupyter.git
-本仓库是 PUBLIC，其实连 token 都不需要（见 B 节方式二末尾纯 https）。
-
+  pip install git+https://<TOKEN>@gitee.com/qryxp/order-processing-hub.git   # Gitee
+  pip install git+https://<TOKEN>@github.com/qryxp/-jupyter.git              # GitHub
+两仓库都是 PUBLIC，其实连 token 都不需要（见 B 节末尾纯 https 即可直接装）。
 
 ============================================================
 E. 更新到最新版（无论在哪台电脑）
 ============================================================
 
-已用方式一/方式二装的：
+已用 Gitee 装的（推荐）：
+  pip install --upgrade git+ssh://git@gitee.com/qryxp/order-processing-hub.git
+  或 HTTPS 版：
+  pip install --upgrade git+https://gitee.com/qryxp/order-processing-hub.git
+
+已用 GitHub 装的（备选）：
   pip install --upgrade git+ssh://git@github.com/qryxp/-jupyter.git
-  或（HTTPS 版）：
-  pip install --upgrade git+https://github.com/qryxp/-jupyter.git
 
-用方式二 clone 可编辑装的：
-  cd -jupyter
+用 clone 可编辑装的：
+  cd order-processing-hub   # 或 -jupyter，取决于 clone 了哪个
   git pull
-
 
 ============================================================
 F. 注意事项
@@ -123,6 +127,6 @@ F. 注意事项
 - 提交前确认没把真实数据放进 data/（data/ 已入库但应是脱敏示例）；
   若误放敏感文件，先从 git 移除并加入 .gitignore。
 - 本机 git 提交作者已设为 qryxp（GitHub no-reply 邮箱），
-  push 后 commits 归到 qryxp 账号下。
+  push 后 commits 归到 qryxp 账号下（Gitee / GitHub 均显示该提交者）。
 - .gitignore 已排除：__pycache__、*.egg-info、.workbuddy/、
-  build/、dist/*.whl，这些不会上传。
+  build/、dist/*.whl、~$*.docx 等 Office 锁文件，这些不会上传。
