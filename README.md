@@ -523,7 +523,12 @@ requirements.txt        # 纯依赖清单（pip install -r requirements.txt）
 
 把本库发布到 GitHub 后，换电脑一行就能装好，且始终是最新版。
 
-### 方式一：一行安装（最简，装好固定、不可直接改代码）
+### 方式一·A：SSH 免密安装（已配 SSH key，推荐）
+```bash
+pip install git+ssh://git@github.com/qryxp/-jupyter.git
+```
+
+### 方式一·B：HTTPS 一行安装
 ```bash
 pip install git+https://github.com/qryxp/-jupyter.git
 ```
@@ -532,15 +537,18 @@ pip install git+https://github.com/qryxp/-jupyter.git
 ### 方式二：可编辑安装（clone 后改代码也同步）
 ```bash
 git clone https://github.com/qryxp/-jupyter.git
-cd da
+cd -jupyter
 pip install -e .
 ```
 
 ### 更新到最新版
 ```bash
-# 用方式一装的：
+# 用方式一·A（SSH）装的：
+pip install --upgrade git+ssh://git@github.com/qryxp/-jupyter.git
+# 用方式一·B（HTTPS）装的：
 pip install --upgrade git+https://github.com/qryxp/-jupyter.git
 # 用方式二 clone 的：
+cd -jupyter
 git pull
 ```
 
