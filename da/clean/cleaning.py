@@ -180,6 +180,79 @@ def 按参照列填充(df, 目标列, 参考列, 方式="组内最常见值", �
     return df
 
 
+def 异常值检测(df, 数值列=None, 方法="iqr", 系数=None, 新增标记列=True, 返回明细=False, 静默=False):
+    """检测数值列的异常值（离群点），返回带标记的新表。
+
+    参数
+    ----
+    df           : 原始 DataFrame（本函数不改原值，只新增标记列）
+    数值列       : 要检测的列名或列表；默认自动检测全部数值列（排除布尔列）
+    方法         : "iqr"   四分位距法（默认，适合偏态/非正态分布）
+                  "sigma" 3σ 法（适合近似正态分布）
+    系数         : 判定宽松度；None 时 iqr 取 1.5、sigma 取 3
+                  - iqr  ：下界=Q1-系数*IQR，上界=Q3+系数*IQR（越大越宽松，异常越少）
+                  - sigma：下界=均值-系数*标准差，上界=均值+系数*标准差
+    新增标记列   : True 时给每行加 `异常_<列名>` 布尔列 + `异常_任一` 汇总列
+    返回明细     : True 时返回 (新表, 明细DataFrame)；明细含 行号/列名/取值/下界/上界
+    静默         : True 时不打印统计
+
+    返回
+    ----
+    新增标记列=True 且 返回明细=False → 新 DataFrame
+    返回明细=True                    → (新 DataFrame, 明细 DataFrame)
+
+    注意
+    ----
+    ⚠️ 本函数只"检测标记"，不删不改原值。异常值到底是录错了还是真实极值，
+       要你看业务判断——顶级销售月薪 9 万不是异常，是人家真拿这么多。
+    """
+    df = df.copy()
+    # 1) 选定数值列（排除布尔）
+    if 数值列 is None:
+        数值列 = [c for c in df.columns
+                 if pd.api.types.is_numeric_dtype(df[c]) and not pd.api.types.is_bool_dtype(df[c])]
+    elif isinstance(数值列, str):
+        数值列 = [数值列]
+
+    # 2) 系数默认值
+    if 系数 is None:
+        系数 = 1.5 if 方法 == "iqr" else 3.0
+
+    flag_cols, records = [], []
+    for col in 数值列:
+        if col not in df.columns:
+            continue
+        s = df[col]
+        if 方法 == "iqr":
+            q1, q3 = s.quantile(0.25), s.quantile(0.75)
+            iqr = q3 - q1
+            lower, upper = q1 - 系数 * iqr, q3 + 系数 * iqr
+        else:  # sigma
+            mu, sigma = s.mean(), s.std()
+            lower, upper = mu - 系数 * sigma, mu + 系数 * sigma
+        # 仅对非空值判定；NaN 不算异常
+        is_out = s.notna() & ((s < lower) | (s > upper))
+        n = int(is_out.sum())
+        flag_cols.append(col)
+        if 新增标记列:
+            df[f"异常_{col}"] = is_out
+        if not 静默:
+            print(f"「{col}」异常 {n} 个（{方法} 法，系数 {系数}）：正常区间 [{lower:.2f}, {upper:.2f}]")
+        # 明细记录
+        for idx in s.index[is_out]:
+            records.append({"行号": idx, "列名": col, "取值": s.loc[idx],
+                            "下界": round(float(lower), 4), "上界": round(float(upper), 4)})
+
+    if 新增标记列 and flag_cols:
+        df["异常_任一"] = df[[f"异常_{c}" for c in flag_cols]].any(axis=1)
+        if not 静默:
+            print(f"⚠️ 任一类异常共 {int(df['异常_任一'].sum())} 行（同時命中多列只算一行）。")
+
+    detail = (pd.DataFrame(records, columns=["行号", "列名", "取值", "下界", "上界"])
+              if records else pd.DataFrame(columns=["行号", "列名", "取值", "下界", "上界"]))
+    return (df, detail) if 返回明细 else df
+
+
 def 清洗管道(df, 日期列=None, 日期格式=None, 空值映射=None, 去重=True, 去空格=True):
     """一键清洗：去空格 → 日期转换 → 空值填充 → 去重。
 
