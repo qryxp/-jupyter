@@ -97,6 +97,89 @@ def 空值映射填充(df, 映射=None, 填充=None, 数值列默认填充=0, �
     return df
 
 
+def 按参照列填充(df, 目标列, 参考列, 方式="组内最常见值", 映射=None, 保留无法映射=True, 静默=False):
+    """按参照列的取值，把目标列的空值「映射填充」。
+
+    典型场景（你刚提的）：商品类型大量缺失，但商品名称几乎都有，
+    且同一商品名称应当对应同一个商品类型 → 用「同名称下已有的类型」
+    去填该名称下缺失的类型，而不是瞎填一个众数。
+
+    参数
+    ----
+    df           : 原始 DataFrame（本函数不改原表，返回新表）
+    目标列       : 要填充空值的列，如 "商品类型"
+    参考列       : 用来分组的参照列，如 "商品名称"
+    方式         : 当同一参考值对应多个非空目标值时怎么选——
+                  "组内最常见值"（默认）：取该组出现最多的目标值
+                  "组内首个"        ：取该组第一个非空目标值
+    映射         : 可选的强制字典 {参考值: 目标值}，优先级最高，直接覆盖；
+                  适合你已经有一份「名称→类型」对照表的情况
+    保留无法映射 : 仅作语义提示——本函数拒绝无依据填充，参考列本身为空的
+                  行一律保留空，绝不瞎猜
+    静默         : True 时不打印歧义警告与填充统计
+
+    返回
+    ----
+    填充后的新 DataFrame
+
+    注意
+    ----
+    ⚠️ 歧义会被主动提示：如果某个商品名称对应了多个不同的商品类型
+    （脏数据矛盾），函数会打印出来让你人工核对，而不是偷偷选一个。
+    """
+    df = df.copy()
+    if 目标列 not in df.columns:
+        raise KeyError(f"目标列不存在：{目标列!r}")
+    if 参考列 not in df.columns:
+        raise KeyError(f"参考列不存在：{参考列!r}")
+
+    # 1) 用户给强制映射字典：直接按字典填（最高优先级）
+    if 映射:
+        miss = df[目标列].isna() & df[参考列].notna() & df[参考列].isin(映射)
+        df.loc[miss, 目标列] = df.loc[miss, 参考列].map(映射)
+        n = int(miss.sum())
+        if not 静默:
+            print(f"✅ 已用强制映射表填充 {n} 个「{目标列}」空值。")
+        return df
+
+    # 2) 由已知数据反推「参考值 → 目标值」映射表
+    known = df[df[目标列].notna()]
+    # 2a) 歧义检测：同一参考值对应多个不同目标值 → 提示人工核对
+    if not 静默:
+        amb = known.groupby(参考列)[目标列].nunique()
+        amb = amb[amb > 1]
+        if len(amb):
+            print(f"⚠️ 发现歧义：以下 {len(amb)} 个「{参考列}」对应了多个不同的「{目标列}」，" +
+                  f"已按「{方式}」自动选一个，请人工核对：")
+            for k in amb.index:
+                vals = known[known[参考列] == k][目标列].unique().tolist()
+                print(f"   {参考列}={k!r}: {vals}")
+
+    # 2b) 计算每组代表值
+    if 方式 == "组内首个":
+        rep = known.groupby(参考列)[目标列].first()
+    else:  # 组内最常见值
+        rep = known.groupby(参考列)[目标列].agg(lambda s: s.value_counts().idxmax())
+
+    # 3) 只填「目标列空 + 参考列有值」的行；参考列空的行保留空
+    need = df[目标列].isna() & df[参考列].notna()
+    n_skip = int((df[目标列].isna() & df[参考列].isna()).sum())
+    filled = df.loc[need, 参考列].map(rep)
+    n_fill = int(filled.notna().sum())
+    n_noref = int((filled.isna() & need).sum())
+    df.loc[need, 目标列] = filled
+    if not 静默:
+        msg = f"✅ 已用「{参考列}」映射填充 {n_fill} 个「{目标列}」空值"
+        extra = []
+        if n_skip:
+            extra.append(f"{n_skip} 行因「{参考列}」本身为空无法映射")
+        if n_noref:
+            extra.append(f"{n_noref} 行「{参考列}」有值但无已知「{目标列}」")
+        msg += ("；" + "，".join(extra) + "，已保留空。") if extra else "。"
+        print(msg)
+    return df
+
+
 def 清洗管道(df, 日期列=None, 日期格式=None, 空值映射=None, 去重=True, 去空格=True):
     """一键清洗：去空格 → 日期转换 → 空值填充 → 去重。
 
