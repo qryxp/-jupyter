@@ -7,7 +7,8 @@
 
 中文调用（推荐，最顺手）
 ------------------------
-    da.技能外包.净到手率(df)
+    da.技能外包.净到手率(df)     # 带域（明确归属时用）
+    da.净到手率(df)             # 顶层直呼（不记域也能用，等价上方）
     da.小微电商.销售额(df)
     da.自媒体.互动率(df)
     da.零工平台.中标率(df)
@@ -45,3 +46,30 @@ __all__ = [
     "list_metrics", "show_recipe", "metrics_in", "get_registry",
     "可算指标", "能力探测", "一键计算",
 ]
+
+
+# ───────────────────────────────────────────────────────────────
+# 顶层直呼指标（无需记属于哪个域）
+#    da.净到手率(df)  ≡  da.技能外包.净到手率(df)
+# 实现：模块级 __getattr__ 在普通属性查不到时，按中文名查注册表返回函数。
+# 注意：指标中文名在全部域中须唯一（注册表为 dict，同名后者覆盖前者）。
+# ───────────────────────────────────────────────────────────────
+def __getattr__(name):
+    """顶层按中文名直呼指标，省去记所属业务域。"""
+    from ._registry import get_registry
+    reg = get_registry()
+    if name in reg:
+        return reg[name].func
+    raise AttributeError(
+        f"da 没有属性 {name!r}。\n"
+        f"  · 查全部指标：da.list_metrics()\n"
+        f"  · 看当前数据能算哪些：da.能力探测(df)\n"
+        f"  · 若 {name!r} 是指标，请确认它已用 @metric 注册（且中文名唯一）。"
+    )
+
+
+def __dir__():
+    names = list(globals().keys())
+    from ._registry import get_registry
+    names += list(get_registry().keys())
+    return sorted(set(names))
