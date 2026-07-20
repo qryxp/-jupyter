@@ -147,7 +147,14 @@ def 看板(df, 名称, *, engine=None, 预设=None, 组合=False):
     预设 = 预设 or _全局["默认预设"]
     meta = _BOARD_REGISTRY.get(名称)
     if meta is None:
-        raise ValueError(f"未知看板 {名称!r}，可选：{list(_BOARD_REGISTRY)}")
+        # 同时支持 @看板模板(name="...") 里的中文友好名查找
+        for m in _BOARD_REGISTRY.values():
+            if m.name == 名称:
+                meta = m
+                break
+    if meta is None:
+        raise ValueError(f"未知看板 {名称!r}，可选：{list(_BOARD_REGISTRY)}（或其友好名："
+                         f"{[m.name for m in _BOARD_REGISTRY.values()]}）")
     spec = meta.func()                      # 模板函数返回图规格列表（与数据无关）
     图组 = []
     for s in spec:
