@@ -17,14 +17,21 @@ def 饼图(df, x=None, y=None, *, engine="plotly", agg="sum", 预设="清爽白"
     参数
     ----
     x      : 分类列（必填），如 "渠道来源"、"品类"
-    y      : 数值列（必填），如 "销售额"
+    y      : 数值列（可选），如 "销售额"。省略时自动按「各类计数」算占比——
+             即只传 x（如 x="渠道来源"）即可看「各渠道订单数占比」
     agg    : 同类汇总（默认 "sum"），详见 聚合填充
     预设    : 换黑底用 预设="暗夜"（饼图在暗夜下配色自动转亮）
     engine : plotly / seaborn / pyecharts
     **kw   : 透传（如 hole 改环形、pull 某块突出）
     """
-    data = 聚合填充(df, x, y, agg=agg)
-    title = f"{y} 占比 · 按 {x}"
+    if y is None:
+        # 占比场景：只给分类列时，按各类出现次数算占比（最常见直觉）
+        data = df[x].value_counts().rename_axis(x).reset_index(name="计数")
+        y = "计数"
+        title = f"{x} 构成占比（按计数）"
+    else:
+        data = 聚合填充(df, x, y, agg=agg)
+        title = f"{y} 占比 · 按 {x}"
 
     if engine == "plotly":
         px = _require("plotly")["px"]
@@ -75,8 +82,13 @@ def 环形图(df, x=None, y=None, *, engine="plotly", agg="sum", 预设="清爽�
     hole   : 中间空洞比例（0=普通饼图，0.6=细环），可改成 0.6 等
     预设="暗夜" 换黑底。
     """
-    data = 聚合填充(df, x, y, agg=agg)
-    title = f"{y} 占比 · 按 {x}"
+    if y is None:
+        data = df[x].value_counts().rename_axis(x).reset_index(name="计数")
+        y = "计数"
+        title = f"{x} 构成占比（按计数）"
+    else:
+        data = 聚合填充(df, x, y, agg=agg)
+        title = f"{y} 占比 · 按 {x}"
 
     if engine == "plotly":
         px = _require("plotly")["px"]
